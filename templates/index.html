@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion-Based Chatbot</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <style>
+        html, body {
+             margin: 0;
+             padding: 0;
+             width: 100%;
+             height: 100vh;
+            overflow: hidden; /* Prevents scrolling issues */
+       }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            margin: 50px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+        }
+        #recordBtn {
+            padding: 12px 25px;
+            font-size: 18px;
+            cursor: pointer;
+            border: none;
+            background: #5738bc;
+            color: white;
+            border-radius: 25px;
+            transition: transform 0.3s ease;
+        }
+        #recordBtn:hover {
+            transform: scale(1.1);
+        }
+        #status, #emotion, #response {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .spinner-border {
+            display: none;
+            margin-top: 10px;
+        }
+        .chat-container {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        .chat-message {
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 10px;
+            opacity: 0;
+        }
+        .user {
+            background-color: #db9cb1;
+            color: white;
+            text-align: right;
+        }
+        .bot {
+            background-color: #4CAF50;
+            color: white;
+            text-align: left;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        #chatInput {
+            border: 1px solid #ccc;
+        }
+        #sendBtn {
+            background: #c06885;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        #sendBtn:hover {
+            transform: scale(1.1);
+        }
+        
+    /* Background Animation */
+    body {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bubbles {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        
+        pointer-events: none;
+    }
+
+    .bubble {
+        position: absolute;
+        bottom: -50px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: floatUp linear infinite;
+    }
+
+    @keyframes floatUp {
+        from {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateY(-120vh);
+            opacity: 0;
+        }
+    }
+</style>
+
+<div class="bubbles"></div>
+
+<script>
+    function createBubbles() {
+        const bubbleContainer = document.querySelector(".bubbles");
+
+        for (let i = 0; i < 15; i++) {
+            let bubble = document.createElement("div");
+            bubble.className = "bubble";
+            let size = Math.random() * 40 + 10; // Bubble size between 10px - 50px
+            bubble.style.width = `${size}px`;
+            bubble.style.height = `${size}px`;
+            bubble.style.left = `${Math.random() * 100}vw`;
+            bubble.style.animationDuration = `${Math.random() * 5 + 3}s`; // 3s - 8s float time
+            bubble.style.animationDelay = `${Math.random() * 3}s`; // Different start times
+            bubbleContainer.appendChild(bubble);
+
+            setTimeout(() => bubble.remove(), 8000); // Remove bubble after animation
+        }
+    }
+
+    setInterval(createBubbles, 2000); // Create bubbles every 2 seconds
+</script>
+
+        
+    
+</head>
+<body>
+    <div class="container" id="mainContainer">
+        <h1>Emotion-Based Chatbot</h1>
+        <button id="recordBtn">Start Recording</button>
+        <p id="status">Click the button to record your voice.</p>
+        <div class="spinner-border text-light" id="loadingSpinner" role="status"></div>
+
+        <h2>Detected Emotion:</h2>
+        <p id="emotion">---</p>
+
+        <div class="chat-container" id="chatbox"></div>
+        <input type="text" id="chatInput" placeholder="Type a message...">
+        <button id="sendBtn">Send</button>
+    </div>
+
+    <script>
+        let detectedEmotion = null;
+let mediaRecorder;
+let audioChunks = [];
+
+document.getElementById("recordBtn").addEventListener("click", function () {
+    document.getElementById("status").innerText = "🎙 Recording...";
+    document.getElementById("loadingSpinner").style.display = "inline-block";
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                const formData = new FormData();
+                formData.append("audio", audioBlob);
+
+                document.getElementById("status").innerText = "⏳ Processing...";
+
+                fetch('/detect-emotion', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    detectedEmotion = data.emotion;
+                    document.getElementById("emotion").innerText = detectedEmotion;
+                    document.getElementById("status").innerText = "✅ Recording complete.";
+                    document.getElementById("loadingSpinner").style.display = "none";
+
+                    addMessage("🤖 " + data.response, "bot");
+                });
+            };
+
+            mediaRecorder.start();
+            setTimeout(() => mediaRecorder.stop(), 5000);  // Record for 5 seconds
+        })
+        .catch(error => {
+            console.error("Error accessing microphone:", error);
+            document.getElementById("status").innerText = "❌ Microphone access denied.";
+        });
+});
+
+document.getElementById("sendBtn").addEventListener("click", function () {
+    const userMessage = document.getElementById("chatInput").value;
+    if (userMessage.trim() === "") return;
+
+    addMessage("👤 " + userMessage, "user");
+    document.getElementById("chatInput").value = "";
+
+    fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, emotion: detectedEmotion })
+    })
+    .then(response => response.json())
+    .then(data => {
+        addMessage("🤖 " + data.response, "bot");
+    });
+});
+
+function addMessage(text, sender) {
+    const chatbox = document.getElementById("chatbox");
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "chat-message " + sender;
+    messageDiv.innerText = text;
+    chatbox.appendChild(messageDiv);
+    chatbox.scrollTop = chatbox.scrollHeight;
+
+    anime({
+        targets: messageDiv,
+        opacity: [0, 1],
+        translateY: [20, 0],
+        duration: 500,
+        easing: 'easeOutQuad'
+    });
+}
+
+window.onload = function () {
+    anime({
+        targets: "#mainContainer",
+        opacity: [0, 1],
+        duration: 1000,
+        easing: "easeInOutQuad"
+    });
+};
+
+    </script>
+</body>
+</html>
+
+
