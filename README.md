@@ -57,4 +57,7 @@ Future Enhancements:
 
 -Deploy as a mobile or web application.
 
+Since the model file is too large we were not able to push it to the git.Here's the colab file for ur reference:
+https://colab.research.google.com/drive/1FjwbLtK-Ch1otwnLTw-DDlsPO4cwOYRs?usp=sharing
+
 
