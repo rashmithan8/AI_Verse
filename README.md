@@ -32,6 +32,12 @@ This project is designed to recognize human emotions from voice input and provid
 
 ### Prerequisites
 Ensure you have Python installed. 
+
+
+**###Model link**
+Since the model file is too large we were not able to push it to the git.Here's the colab file for ur reference:
+https://colab.research.google.com/drive/1FjwbLtK-Ch1otwnLTw-DDlsPO4cwOYRs?usp=sharing
+
 ### Step 1: Install Dependencies
 Navigate to the project folder and install the required Python libraries:
 ```bash
@@ -57,7 +63,6 @@ Future Enhancements:
 
 -Deploy as a mobile or web application.
 
-Since the model file is too large we were not able to push it to the git.Here's the colab file for ur reference:
-https://colab.research.google.com/drive/1FjwbLtK-Ch1otwnLTw-DDlsPO4cwOYRs?usp=sharing
+
 
 
